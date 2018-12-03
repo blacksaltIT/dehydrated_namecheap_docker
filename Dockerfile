@@ -4,8 +4,8 @@ RUN apk add --no-cache git bash openssl bind-tools curl ${PREINSTALLED_PACKAGES}
 
 ARG DEHYDRATED_GIT_REPO=https://github.com/lukas2511/dehydrated.git
 ARG DEHYDRATED_GIT_REF=master
-ARG DEHYDRATED_NAMECHEAP_GIT_REPO=https://github.com/wdouglascampbell/dehydrated_namecheap_dns_api_hook.git
-ARG DEHYDRATED_NAMECHEAP_GIT_REF=master
+ARG DEHYDRATED_NAMECHEAP_GIT_REPO=https://github.com/blacksaltIT/dehydrated_namecheap_dns_api_hook.git
+ARG DEHYDRATED_NAMECHEAP_GIT_REF=remotes/origin/curl_opts
 RUN git clone ${DEHYDRATED_GIT_REPO} /app/ && \
     git -C /app reset --hard ${DEHYDRATED_GIT_REF} && \
     git clone ${DEHYDRATED_NAMECHEAP_GIT_REPO} /app/dehydrated_namecheap_dns_api_hook && \
