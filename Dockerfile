@@ -24,17 +24,17 @@ RUN git clone ${DEHYDRATED_GIT_REPO} /app/ && \
 # but prefix them with DHV_
 ENV DHV_BASEDIR=/app_data/dehydrated \
     DHV_HOOK=/app/dehydrated_namecheap_dns_api_hook/namecheap_dns_api_hook.sh
-RUN echo "eval \"\$(declare -xp | sed -n 's/^declare -x DHV_//p')\"" > /app/config
+RUN echo "source <(declare -xp | sed -n 's/^declare -x DHV_//p')" > /app/config
 
 # Dehydrated NameCheap hook configuration
 # Set variables as described in https://github.com/wdouglascampbell/dehydrated_namecheap_dns_api_hook/blob/master/config
 # but prefix them with DHNV_
 ENV DHNV_DEPLOYED_CERTDIR=/app_data/certs \
     DHNV_DEPLOYED_KEYDIR=/app_data/keys
-RUN echo "eval \"\$(declare -xp | sed -n 's/^declare -x DHNV_//p')\"" > /app/dehydrated_namecheap_dns_api_hook/config
+RUN echo "source <(declare -xp | sed -n 's/^declare -x DHNV_//p')" > /app/dehydrated_namecheap_dns_api_hook/config
 
 ENV DEPLOY_COMMANDS=
-RUN echo "eval \"\$DEPLOY_COMMANDS\"" >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
+RUN echo "source <(echo \"\$DEPLOY_COMMANDS\")" >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
 
 VOLUME /app_data/
 
