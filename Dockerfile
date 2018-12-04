@@ -38,4 +38,4 @@ RUN echo "eval \"\$DEPLOY_COMMANDS\"" >> /app/dehydrated_namecheap_dns_api_hook/
 
 VOLUME /app_data/
 
-CMD [ "/bin/bash", "-c", "(mkdir -pv $DHV_BASEDIR $DHNV_DEPLOYED_CERTDIR $DHNV_DEPLOYED_KEYDIR; ((source <(/app/dehydrated --env); test -f $ACCOUNT_KEY) || /app/dehydrated --register --accept-terms) && /app/dehydrated --cron) & trap \"kill $!\" INT TERM; wait %1" ]
+CMD [ "/bin/bash", "-c", "(mkdir -pv $DHV_BASEDIR $DHNV_DEPLOYED_CERTDIR $DHNV_DEPLOYED_KEYDIR; ((source <(/app/dehydrated --env); test -f $ACCOUNT_KEY) || /app/dehydrated --register --accept-terms) && /app/dehydrated --cron) & trap \"kill -INT $!\" INT TERM; wait %1" ]
