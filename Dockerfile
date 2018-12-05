@@ -24,14 +24,14 @@ RUN git clone ${DEHYDRATED_GIT_REPO} /app/ && \
 # but prefix them with DHV_
 ENV DHV_BASEDIR=/app_data/dehydrated \
     DHV_HOOK=/app/dehydrated_namecheap_dns_api_hook/namecheap_dns_api_hook.sh
-RUN echo "for v in \$(compgen -v | grep ^DHV_); do eval \"\${v//DHV_}=\"\\\$\${v}\"\"; done" > /app/config
+RUN echo "for v in \$(compgen -v | grep ^DHV_); do eval \"export \${v//DHV_}=\\\"\\\$\${v}\\\"\"; done" > /app/config
 
 # Dehydrated NameCheap hook configuration
 # Set variables as described in https://github.com/wdouglascampbell/dehydrated_namecheap_dns_api_hook/blob/master/config
 # but prefix them with DHNV_
 ENV DHNV_DEPLOYED_CERTDIR=/app_data/certs \
     DHNV_DEPLOYED_KEYDIR=/app_data/keys
-RUN echo "for v in \$(compgen -v | grep ^DHNV_); do eval \"\${v//DHNV_}=\"\\\$\${v}\"\"; done" > /app/config
+RUN echo "for v in \$(compgen -v | grep ^DHNV_); do eval \"export \${v//DHNV_}=\\\"\\\$\${v}\\\"\"; done" > /app/config
 
 ENV DEPLOY_COMMANDS=
 RUN echo "eval \"\$DEPLOY_COMMANDS\"" >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
