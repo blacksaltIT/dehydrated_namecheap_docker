@@ -11,8 +11,8 @@ RUN curl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VER
 # dehydrated + namecheap hook
 ARG DEHYDRATED_GIT_REPO=https://github.com/lukas2511/dehydrated.git
 ARG DEHYDRATED_GIT_REF=master
-ARG DEHYDRATED_NAMECHEAP_GIT_REPO=https://github.com/blacksaltIT/dehydrated_namecheap_dns_api_hook.git
-ARG DEHYDRATED_NAMECHEAP_GIT_REF=remotes/origin/curl_opts
+ARG DEHYDRATED_NAMECHEAP_GIT_REPO=https://github.com/wdouglascampbell/dehydrated_namecheap_dns_api_hook.git
+ARG DEHYDRATED_NAMECHEAP_GIT_REF=master
 RUN git clone ${DEHYDRATED_GIT_REPO} /app/ && \
     git -C /app reset --hard ${DEHYDRATED_GIT_REF} && \
     git clone ${DEHYDRATED_NAMECHEAP_GIT_REPO} /app/dehydrated_namecheap_dns_api_hook && \
@@ -24,17 +24,17 @@ RUN git clone ${DEHYDRATED_GIT_REPO} /app/ && \
 # but prefix them with DHV_
 ENV DHV_BASEDIR=/app_data/dehydrated \
     DHV_HOOK=/app/dehydrated_namecheap_dns_api_hook/namecheap_dns_api_hook.sh
-RUN echo "source <(declare -xp | sed -n 's/^declare -x DHV_//p')" > /app/config
+RUN echo "for v in \$(compgen -v | grep ^DHV_); do eval \"\${v//DHV_}=\"\\\$\${v}\"\"; done" > /app/config
 
 # Dehydrated NameCheap hook configuration
 # Set variables as described in https://github.com/wdouglascampbell/dehydrated_namecheap_dns_api_hook/blob/master/config
 # but prefix them with DHNV_
 ENV DHNV_DEPLOYED_CERTDIR=/app_data/certs \
     DHNV_DEPLOYED_KEYDIR=/app_data/keys
-RUN echo "source <(declare -xp | sed -n 's/^declare -x DHNV_//p')" > /app/dehydrated_namecheap_dns_api_hook/config
+RUN echo "for v in \$(compgen -v | grep ^DHNV_); do eval \"\${v//DHNV_}=\"\\\$\${v}\"\"; done" > /app/config
 
 ENV DEPLOY_COMMANDS=
-RUN echo "source <(echo \"\$DEPLOY_COMMANDS\")" >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
+RUN echo "eval \"\$DEPLOY_COMMANDS\"" >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
 
 VOLUME /app_data/
 
