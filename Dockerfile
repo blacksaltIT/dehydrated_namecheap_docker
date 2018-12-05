@@ -2,12 +2,6 @@ FROM alpine:3.8
 ARG PREINSTALLED_PACKAGES=
 RUN apk add --no-cache git bash openssl bind-tools curl ${PREINSTALLED_PACKAGES}
 
-# kubectl
-ARG KUBECTL_VERSION=v1.12.2
-RUN curl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl > /usr/bin/kubectl && \
-    chmod -v +x /usr/bin/kubectl && \
-    kubectl version --client
-
 # dehydrated + namecheap hook
 ARG DEHYDRATED_GIT_REPO=https://github.com/lukas2511/dehydrated.git
 ARG DEHYDRATED_GIT_REF=master
