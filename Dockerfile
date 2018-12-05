@@ -31,7 +31,7 @@ RUN echo "for v in \$(compgen -v | grep ^DHV_); do eval \"export \${v//DHV_}=\\\
 # but prefix them with DHNV_
 ENV DHNV_DEPLOYED_CERTDIR=/app_data/certs \
     DHNV_DEPLOYED_KEYDIR=/app_data/keys
-RUN echo "for v in \$(compgen -v | grep ^DHNV_); do eval \"export \${v//DHNV_}=\\\"\\\$\${v}\\\"\"; done" > /app/config
+RUN echo "for v in \$(compgen -v | grep ^DHNV_); do eval \"export \${v//DHNV_}=\\\"\\\$\${v}\\\"\"; done" > /app/dehydrated_namecheap_dns_api_hook/config
 
 ENV DEPLOY_COMMANDS=
 RUN echo "eval \"\$DEPLOY_COMMANDS\"" >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
