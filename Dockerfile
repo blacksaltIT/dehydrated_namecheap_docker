@@ -33,9 +33,10 @@ ENV DHNV_DEPLOYED_CERTDIR=/app_data/certs \
     DHNV_DEPLOYED_KEYDIR=/app_data/keys
 RUN echo 'source <(for v in $(compgen -v | grep ^DHNV_); do echo "${v//DHNV_}=$(eval "echo -n \"\$${v}\"")"; done)' > /app/dehydrated_namecheap_dns_api_hook/config
 
-ENV DEPLOY_COMMANDS=
-RUN echo "eval \"\$DEPLOY_COMMANDS\"" >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
+ENV RELOAD_SCRIPT=/app_files/reload_services.sh
+RUN echo 'bash "$RELOAD_SCRIPT" "$@"' >> /app/dehydrated_namecheap_dns_api_hook/reload_services.sh
 
 VOLUME /app_data/
+VOLUME /app_files/
 
 CMD [ "/bin/bash", "-c", "(mkdir -pv $DHV_BASEDIR $DHNV_DEPLOYED_CERTDIR $DHNV_DEPLOYED_KEYDIR; ((source <(/app/dehydrated --env); test -f $ACCOUNT_KEY) || /app/dehydrated --register --accept-terms) && /app/dehydrated --cron) & trap \"kill -INT $!\" INT TERM; wait %1" ]
