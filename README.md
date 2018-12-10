@@ -29,7 +29,7 @@ You can refer to other variables in values just like in the example config files
 ## Volumes
 
 | Name | Description
-|--|--|--|
+|--|--|
 | /app_data/ | Mount volume for generated files here |
 | /app_files/ | Mount user supplied files here such as reload script or domains.txt |
 
