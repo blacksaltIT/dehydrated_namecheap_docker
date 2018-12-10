@@ -1,0 +1,168 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  labels:
+    app: dehydrated-namecheap
+  name: dehydrated-namecheap
+  namespace: ingress-controller
+spec:
+  # schedule: '*/1 * * * *'
+  schedule: '0 3 * * *'
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 3
+
+  jobTemplate:
+    metadata:
+      labels:
+        app: dehydrated-namecheap
+
+    spec:
+      template:
+        metadata:
+          labels:
+            app: dehydrated-namecheap
+        spec:
+          serviceAccount: dehydrated-namecheap
+          # hostNetwork: true
+
+          containers:
+          - name: &certContainer dehydrated-namecheap
+            envFrom:
+            # dehydrated
+            - configMapRef:
+                name: dehydrated-namecheap-dhv
+              prefix: DHV_
+            - secretRef:
+                name: dehydrated-namecheap-dhv
+              prefix: DHV_
+
+            # namecheap hook
+            - configMapRef:
+                name: dehydrated-namecheap-dhnv
+              prefix: DHNV_
+            - secretRef:
+                name: dehydrated-namecheap-dhnv
+              prefix: DHNV_
+
+            image: blacksalt/dehydrated_namecheap:bscustom
+            imagePullPolicy: Always
+
+            # Use hostNetwork: true, privileged: true and CURL_OPTS="--interfaces xxx" if the node doesn't uses a namecheap whitelisted ip by default
+            # securityContext:
+            #   privileged: true
+
+            volumeMounts:
+            - name: app-data
+              mountPath: /app_data/
+            - name: files
+              mountPath: /app_files/
+
+          
+          - name: &mailContainer postfix
+            image: mwader/postfix-relay
+            imagePullPolicy: Always
+
+
+          # https://github.com/kubernetes/kubernetes/issues/25908#issuecomment-445820743
+          - name: docker 
+            image: docker
+            securityContext:
+              privileged: true
+
+            env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CERT_CONTAINER
+              value: *certContainer
+            - name: MAIL_CONTAINER
+              value: *mailContainer
+              
+            command:
+            - sh
+            - -c
+            - |
+              set -e
+              set -o pipefail
+
+              # getContainerProp <containerName> <propertyName>
+              # propertyName: one of https://docs.docker.com/engine/reference/commandline/ps/#formatting
+              function getContainerProp() {
+                docker ps --all --filter "label=io.kubernetes.pod.namespace=$POD_NAMESPACE" --filter "label=io.kubernetes.pod.name=$POD_NAME" --filter "label=io.kubernetes.container.name=$1" --format "{{$2}}"
+              }
+
+              # waitForStatus <containerName> <statusRegex>
+              # statusRegex: see statuses with docker ps -a
+              function waitForStatus() {
+                while ! getContainerProp $1 .Status | grep -q "$2"; do
+                  echo "Waiting for status of $1 get match to $2..."
+                  sleep 2
+                done
+                echo "Wait for status of $1 is done."
+              }
+
+              # waitForExited <containerName>
+              function waitForExited() {
+                waitForStatus $1 "^Exited"
+              }
+
+              # waitForExited <containerName>
+              function waitForRunning() {
+                waitForStatus $1 "^Up "
+              }
+
+              # execInContainer <containerName> <command> [args...]
+              function execInContainer() {
+                local cId=$(getContainerProp $1 .ID)
+                shift
+                docker exec $cId "$@"
+              }
+
+              # stopContainer <containerName>
+              function stopContainer() {
+                echo "Stopping $1..."
+                docker stop $(getContainerProp $1 .ID)
+              }
+
+              # Wait for jobs
+              waitForExited $CERT_CONTAINER
+
+              # Wait for services
+              waitForRunning $MAIL_CONTAINER
+              while ! execInContainer $MAIL_CONTAINER postqueue -p > /dev/null 2>&1; do
+                echo "Waiting for postfix init..."
+                sleep 1
+              done
+
+              # Wait for services to get done their jobs
+              while ! execInContainer $MAIL_CONTAINER postqueue -p | grep -q 'Mail queue is empty'; do
+                echo "Waiting for sending mails..."
+                sleep 2
+              done
+
+              # Stop services
+              stopContainer $MAIL_CONTAINER
+
+            volumeMounts:
+              - name: docker
+                mountPath: /var/run/docker.sock
+
+
+          restartPolicy: OnFailure
+          volumes:
+          - name: app-data
+            persistentVolumeClaim:
+              claimName: dehydrated-namecheap
+          - name: files
+            configMap:
+              name: dehydrated-namecheap
+          - name: docker
+            hostPath:
+              path: /var/run/docker.sock
+              type: Socket
